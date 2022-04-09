@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/zhou/CODE/C++/file/build",
+  "command": "/bin/c++   -g -o CMakeFiles/File.dir/main.cpp.o -c /home/zhou/CODE/C++/file/main.cpp",
+  "file": "/home/zhou/CODE/C++/file/main.cpp"
+}
+]
