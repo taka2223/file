@@ -10,7 +10,7 @@ const int INODE_BITMAP_ADD = SUPER_BLOCK_ADD + 1 * BLOCK_SIZE;                  
 const int BLOCK_BITMAP_ADD = INODE_BITMAP_ADD + 1 * BLOCK_SIZE;                             // block bitmap的开始地址，bitmap大小为20个block，可以监控20480个block的状态
 const int INODE_BLOCK_ADD = BLOCK_BITMAP_ADD + 20 * BLOCK_SIZE;                             // inode的开始地址
 const int BLOCK_ADD = INODE_BLOCK_ADD + INODE_NUM / (BLOCK_SIZE / INODE_SIZE) * BLOCK_SIZE; // block的开始地址
-
+const int BLOCKS_PER_GROUP = 128;
 std::vector<bool> inodeBitMap(INODE_NUM, false);
 std::vector<bool> blockBitMap(BLOCK_NUM, false);
 SuperBlock superBlock;
