@@ -1,6 +1,8 @@
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
+using namespace std;
 extern const std::string DISK_NAME;
 extern const int BLOCK_SIZE;
 extern const int BLOCK_NUM;
@@ -14,15 +16,9 @@ extern const int INODE_BLOCK_ADD;  // inode的开始地址
 extern const int BLOCK_ADD;        // block的开始
 
 extern const int BLOCKS_PER_GROUP; //成组链接法中每组的block数量
-struct SuperBlock
-{
-    int blockCount;
-    int freeBlockCount;
-    int inodeCount;
-    int freeInodeCount;
-};
-extern SuperBlock superBlock;
-extern std::vector<bool> inodeBitMap;
-extern std::vector<bool> blockBitMap;
+extern std::vector<char> inodeBitMap;
+extern std::vector<char> blockBitMap;
 extern std::ifstream fr;
 extern std::ofstream fw;
+ifstream &operator>>(ifstream &in, vector<char> &bitmap);
+ofstream &operator<<(ofstream &out, vector<char> &bitmap);

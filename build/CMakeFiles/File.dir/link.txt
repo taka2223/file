@@ -1,1 +1,1 @@
-/bin/c++ -g -rdynamic CMakeFiles/File.dir/main.cpp.o -o File 
+/bin/c++ -g -rdynamic CMakeFiles/File.dir/main.cpp.o CMakeFiles/File.dir/global.cpp.o -o File 

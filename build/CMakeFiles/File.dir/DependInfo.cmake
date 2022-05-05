@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/zhou/CODE/C++/file/global.cpp" "CMakeFiles/File.dir/global.cpp.o" "gcc" "CMakeFiles/File.dir/global.cpp.o.d"
   "/home/zhou/CODE/C++/file/main.cpp" "CMakeFiles/File.dir/main.cpp.o" "gcc" "CMakeFiles/File.dir/main.cpp.o.d"
   )
 

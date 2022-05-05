@@ -837,12 +837,12 @@ CMakeFiles/ContinuousSubmit.dir/clean:
 CMakeFiles/File.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/File.dir/build.make CMakeFiles/File.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/File.dir/build.make CMakeFiles/File.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/zhou/CODE/C++/file/build/CMakeFiles --progress-num=1,2 "Built target File"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/zhou/CODE/C++/file/build/CMakeFiles --progress-num=1,2,3 "Built target File"
 .PHONY : CMakeFiles/File.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/File.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/zhou/CODE/C++/file/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/zhou/CODE/C++/file/build/CMakeFiles 3
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/File.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/zhou/CODE/C++/file/build/CMakeFiles 0
 .PHONY : CMakeFiles/File.dir/rule
