@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+D:/CLION/code/filestream/func.h
+global.h
+D:/CLION/code/filestream/global.h
+string.h
+-
+
+D:/CLION/code/filestream/global.h
+fstream
+-
+iostream
+-
+string
+-
+vector
+-
+ctime
+-
+
+D:/CLION/code/filestream/main.cpp
+func.h
+D:/CLION/code/filestream/func.h
+
