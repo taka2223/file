@@ -33,12 +33,15 @@ bool mkdir(int parent,const string& name);
 //支持嵌套（通过cd函数）
 bool createDir(string name);
 
-// cd()
+void cd(int parent,const string& name);
+
+void changeDir(string name);//支持嵌套
 // deleteDir()
 
 // createFile()
 // deleteFile()
-
+// copy()
+// cat()(展示文件内容)
 //ls （展示所有文件）
 
 #endif //FILESTREAM_FUNC_H

@@ -21,4 +21,5 @@ std::vector<char> inodeBitMap(INODE_NUM, 0);
 std::vector<char> blockBitMap(BLOCK_NUM, 0);
 std::fstream f;
 SuperBlock superBlock;
-
+int curAddr = INODE_BLOCK_ADD;
+string curName =".";

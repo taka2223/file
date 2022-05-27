@@ -15,6 +15,7 @@ int main() {
         f.read((char*)blockBitMap.data(),blockBitMap.size()*sizeof(char));
         printInfo();
         string input;
+        while (input!="exit"){
         cin>>input;
         if (input=="allocate"){
             for (int i = 0; i <20 ; ++i) {
@@ -36,6 +37,41 @@ int main() {
             cout<<test.id<<endl;
             cout<<test.ctime<<endl;
             cout<<tmp[0].name<<endl;
+        } else if (input=="mkdir"){
+            string name;
+            cin>>name;
+            mkdir(curAddr,name);
+            Inode test{};
+            DirItem tmp[32]={0};
+            f.seekg(curAddr,ios::beg);
+            f.read((char*)&test,sizeof(Inode));
+            cout<<f.good()<<endl;
+            f.seekg(test.dirBlock[0],ios::beg);
+            cout<<f.good()<<endl;
+            f.read((char*)tmp,sizeof(tmp));
+            cout<<test.id<<endl;
+            cout<<test.ctime<<endl;
+            cout<<tmp[0].name<<endl;
+            cout<<tmp[1].name<<endl;
+            cout<<tmp[2].name<<endl;
+        } else if (input=="changeDir"){
+            string name;
+            cin>>name;
+            changeDir(name);
+            Inode test{};
+            DirItem tmp[32]={0};
+            f.seekg(curAddr,ios::beg);
+            f.read((char*)&test,sizeof(Inode));
+            cout<<f.good()<<endl;
+            f.seekg(test.dirBlock[0],ios::beg);
+            cout<<f.good()<<endl;
+            f.read((char*)tmp,sizeof(tmp));
+            cout<<test.id<<endl;
+            cout<<test.ctime<<endl;
+            cout<<tmp[0].name<<endl;
+            cout<<tmp[1].name<<endl;
+            cout<<tmp[2].name<<endl;
+        }
         }
     } else{
         cout<<"Create the disk"<<endl;

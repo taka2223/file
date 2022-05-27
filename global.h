@@ -51,4 +51,6 @@ struct DirItem{
     int inodeAddr=0;
 };
 extern SuperBlock superBlock;
+extern int curAddr;//当前目录地址
+extern string curName;//当前目录名
 #endif //FILESTREAM_GLOBAL_H
