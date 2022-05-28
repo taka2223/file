@@ -7,6 +7,7 @@
 
 #include "global.h"
 #include <cstring>
+#include <vector>
 
 bool init();
 
@@ -41,7 +42,7 @@ void changeDir(string name);//支持嵌套
 // createFile()
 // deleteFile()
 // copy() 复制file1到file2，如果file2存在则询问是否继续
-bool copy(const string& path1, const string& path2);
+bool copy(string path1, string path2);
 // cat()(展示文件内容)
 bool cat(const string& path);
 //ls （展示所有文件）
@@ -51,6 +52,9 @@ bool ls(const string& path);
 // 添加:无法进行该次定位返回false, 通过引用修改输入的addr和name
 bool toolcd(const string& name, int &l_curAddr = curAddr, string& l_curName = curName);
 bool toolchangeDir(string name, int &l_curAddr = curAddr, string& l_curName = curName);
+bool toolchangeDir(vector<string> elems, bool relative = true, int &l_curAddr = curAddr, string& l_curName = curName);
+vector<string> split(const string& strIn, char delim);
+int getFileAddr(int parent, const string& name);
 // void mywrite(int faddr, const char * buffer, int len);
 // void myread(int faddr, const char * buffer, int len)
 #endif //FILESTREAM_FUNC_H
