@@ -15,7 +15,9 @@ bool mkroot() {
         return false;
     }
     strcpy(itemList[0].name, ".");
+    strcpy(itemList[1].name,"..");
     itemList[0].inodeAddr = inodeAddr;
+    itemList[1].inodeAddr = inodeAddr;
     f.seekp(blockAddr, ios::beg);
     f.write((char *) itemList, sizeof(itemList));
 
@@ -24,7 +26,7 @@ bool mkroot() {
     time(&root.ctime);
     time(&root.atime);
     time(&root.mtime);
-    root.cnt = 1;
+    root.cnt = 2;//应该是1还是2？
     root.isFile= false;
     root.dirBlock[0] = blockAddr;
     root.indirBlock = -1;
@@ -436,6 +438,7 @@ void cd(int parent,const string& name) {//当前目录(parent)下的name目录
                             if (curName[k]=='/')break;
                         }
                         curName = curName.substr(0,k);
+                        curAddr = j.inodeAddr;
                         return;
                     } else
                     {
@@ -471,6 +474,7 @@ void cd(int parent,const string& name) {//当前目录(parent)下的name目录
                                     if (curName[k]=='/')break;
                                 }
                                 curName = curName.substr(0,k);
+                                curAddr = j.inodeAddr;
                                 return;
                             } else
                             {
@@ -501,6 +505,139 @@ void changeDir(string name) {
     cd(curAddr,name);
 }
 
+bool toolcd(const string& name, int &l_curAddr, string& l_curName){//当前目录(parent)下的name目录
+    // 功能：进行一层cd操作
+    // name: 一个不含'/'目录名
+    // l_curAddr: 目录inode addr 引用
+    // l_curName：目录字符串 引用
+    // 备注:输出不保证目录字符串已经格式化，可能出现如../../..////等
+    Inode parentInode{};
+    f.seekg(l_curAddr,ios::beg);
+    f.read((char*)&parentInode,sizeof(Inode));
+    DirItem itemList[32];
+    // 查看dirBlock中的DirItem
+    for (int i : parentInode.dirBlock) {
+        if (i==-1){
+            continue;
+        }
+        f.seekg(i,ios::beg);
+        f.read((char*)itemList,sizeof(itemList));
+        for (auto & j : itemList) {
+            // 读入对应名字的Item 找到非file的Inode
+            if (strcmp(j.name,name.c_str())==0){
+                Inode tmp{};
+                f.seekg(j.inodeAddr,ios::beg);
+                f.read((char*)&tmp,sizeof(Inode));
+                if (!tmp.isFile){
+                    // 对path string进行更改
+                    if (strcmp(j.name,".")==0){
+                        return true;
+                    } else if (strcmp(j.name,"..")==0){
+                        int k;
+                        for (k = strlen(l_curName.c_str()); k >=0 ; k--) {
+                            if (l_curName[k]=='/')break;
+                        }
+                        l_curName = l_curName.substr(0,k);
+                        l_curAddr = j.inodeAddr;
+                        return true;
+                    } else
+                    {
+                        l_curAddr = j.inodeAddr;
+                        l_curName.append("/");
+                        l_curName.append(j.name);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    if (parentInode.indirBlock!=-1){
+        int blocks[256];
+        f.seekg(parentInode.indirBlock,ios::beg);
+        f.read((char*)blocks,sizeof(blocks));
+        for (int block : blocks) {
+            if ((block-BLOCK_ADD)%BLOCK_SIZE==0){
+                f.seekg(block,ios::beg);
+                f.read((char*)itemList,sizeof(itemList));
+                for (auto & j : itemList) {
+                    if (strcmp(j.name,name.c_str())==0){
+                        Inode tmp{};
+                        f.seekg(j.inodeAddr,ios::beg);
+                        f.read((char*)&tmp,sizeof(Inode));
+                        if (!tmp.isFile){
+                            if (strcmp(j.name,".")==0){
+                                return true;
+                            } else if (strcmp(j.name,"..")==0){
+                                int k;
+                                for (k = strlen(l_curName.c_str()); k >=0 ; k--) {
+                                    if (l_curName[k]=='/')break;
+                                }
+                                l_curName = l_curName.substr(0,k);
+                                l_curAddr = j.inodeAddr;
+                                return true;
+                            } else
+                            {
+                                l_curAddr = j.inodeAddr;
+                                l_curName.append("/");
+                                l_curName.append(j.name);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 可在此部分添加return false
+    // 没有提前return，目录变动不合法
+    return false;
+    }
+
+bool toolchangeDir(string name, int &l_curAddr, string& l_curName){
+    // 功能：进行cd操作，支持绝对路径。当路径不合法则留在原路径。
+    // name: 路径
+    // l_curAddr: 目录inode addr 引用
+    // l_curName：目录字符串 引用
+    // 备注:输出不保证目录字符串已经格式化，可能出现如../../..////等
+
+    // 保存副本，当目录不合法时用于复原
+    int originAddr = l_curAddr;
+    string originName = l_curName;
+
+    if (strlen(name.c_str()) == 0) return false;
+    if (name[0] == '/'){    // name 为绝对路径,改变到根目录
+        l_curAddr = INODE_BLOCK_ADD;
+        l_curName = "/";
+    
+    }
+
+    // 去除一次头部/
+    int i = 0;
+    for (; i <strlen(name.c_str()) && name[i] == '/'; ++i);
+    if (i == strlen(name.c_str())) return true; // 全为/不改变路径
+    // 至少有一些路径
+    name = name.substr(i);
+    i = 0;
+    
+    for (; i <= strlen(name.c_str()); ++i) { // 找到下一个/或到结束
+        if (i == strlen(name.c_str()) || name[i]=='/'){
+            string tmp = name.substr(0,i);
+            if (toolcd(tmp, l_curAddr, l_curName) == false){    // 尝试一层寻路，失败则复原
+                l_curAddr = originAddr;
+                l_curName = originName;
+                cout << "Invalid path" << endl;
+                return false;
+            }
+            // 过滤掉可能的/符号, 之后i可能超出，则已完成
+            for (; i <strlen(name.c_str()) && name[i] == '/'; ++i);
+            if (i == strlen(name.c_str())) return true;
+            name = name.substr(i);
+            i = 0;
+        }
+    }
+}
 // 文件复制 复制file1到file2，如果file2存在则询问是否继续
 bool copy(const string& path1, const string& path2){
 //目录复制要做吗?暂时不做
@@ -512,18 +649,10 @@ bool copy(const string& path1, const string& path2){
 //理论方法：创建两个addr变量（inode地址）,调用cd或changeDir找对应inode addr
 //文件复制:类似于创建文件,只需要生成过程改为复制
 //目录复制
+    // 以下仅复制文件
+    // 检查path1
+    
 }
-// changeDir的改写 c认为更清晰?
-// int start = 0;
-// for (int i = 0; i < strlen(name.c_str(); i++)){
-//     if (name[i] == '/'){
-//         string tmp = name.substr(start, i);
-//         cd(curAddr, tmp);
-//         start = i+1;
-//     }
-// }
-// cd(curAddr, name);
-
 // cat()(展示文件内容)
 // 判断path是否可达而且为文件
 // 通过inode展示文件内容
@@ -538,3 +667,4 @@ bool cat(const string& path){
 bool ls(const string& path){
 
 }
+

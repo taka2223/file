@@ -71,8 +71,54 @@ int main() {
             cout<<tmp[0].name<<endl;
             cout<<tmp[1].name<<endl;
             cout<<tmp[2].name<<endl;
+            cout<<tmp[3].name<<endl;
+        }
+        else if (input=="cdl"){//用于测试toolcd和toolchangeDir local
+            int tmpAddr = curAddr;
+            string tmpName = curName;
+
+            string name;
+            cin >> name;
+            toolchangeDir(name, tmpAddr, tmpName);
+
+            cout << "myfileSys# " << tmpName << ">" << endl;
+            Inode test{};
+            DirItem tmp[32]={0};
+            f.seekg(tmpAddr,ios::beg);
+            f.read((char*)&test,sizeof(Inode));
+            cout<<f.good()<<endl;
+            f.seekg(test.dirBlock[0],ios::beg);
+            cout<<f.good()<<endl;
+            f.read((char*)tmp,sizeof(tmp));
+            cout<<test.id<<endl;
+            cout<<test.ctime<<endl;
+            cout<<tmp[0].name<<endl;
+            cout<<tmp[1].name<<endl;
+            cout<<tmp[2].name<<endl;
+        }
+        else if (input=="cdg"){//用于测试toolcd和toolchangeDir global
+
+            string name;
+            cin >> name;
+            toolchangeDir(name, curAddr, curName);
+
+            cout << "myfileSys# " << curName << ">" << endl;
+            Inode test{};
+            DirItem tmp[32]={0};
+            f.seekg(curAddr,ios::beg);
+            f.read((char*)&test,sizeof(Inode));
+            cout<<f.good()<<endl;
+            f.seekg(test.dirBlock[0],ios::beg);
+            cout<<f.good()<<endl;
+            f.read((char*)tmp,sizeof(tmp));
+            cout<<test.id<<endl;
+            cout<<test.ctime<<endl;
+            cout<<tmp[0].name<<endl;
+            cout<<tmp[1].name<<endl;
+            cout<<tmp[2].name<<endl;
         }
         }
+        
     } else{
         cout<<"Create the disk"<<endl;
         ofstream out(DISK_NAME,ios::binary);

@@ -49,7 +49,8 @@ bool ls(const string& path);
 // utils
 // 逐层定位目录的工具cd，行为逻辑同cd
 // 添加:无法进行该次定位返回false, 通过引用修改输入的addr和name
-bool toolcd(int parent, const string& name, int &l_curAddr = curAddr, string& l_curName = curName);
+bool toolcd(const string& name, int &l_curAddr = curAddr, string& l_curName = curName);
+bool toolchangeDir(string name, int &l_curAddr = curAddr, string& l_curName = curName);
 // void mywrite(int faddr, const char * buffer, int len);
 // void myread(int faddr, const char * buffer, int len)
 #endif //FILESTREAM_FUNC_H
