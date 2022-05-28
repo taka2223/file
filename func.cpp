@@ -407,11 +407,14 @@ bool createDir(string name) {
     return false;
 }
 
+// 进行一层目录位置的改变
+// Q：有没有对不合法目录的处理？
 void cd(int parent,const string& name) {//当前目录(parent)下的name目录
     Inode parentInode{};
     f.seekg(parent,ios::beg);
     f.read((char*)&parentInode,sizeof(Inode));
     DirItem itemList[32];
+    // 查看dirBlock中的DirItem
     for (int i : parentInode.dirBlock) {
         if (i==-1){
             continue;
@@ -419,6 +422,7 @@ void cd(int parent,const string& name) {//当前目录(parent)下的name目录
         f.seekg(i,ios::beg);
         f.read((char*)itemList,sizeof(itemList));
         for (auto & j : itemList) {
+            // 读入对应名字的Item 找到非file的Inode
             if (strcmp(j.name,name.c_str())==0){
                 Inode tmp{};
                 f.seekg(j.inodeAddr,ios::beg);
@@ -481,6 +485,8 @@ void cd(int parent,const string& name) {//当前目录(parent)下的name目录
             }
         }
     }
+
+    // 可在此部分添加return false
     }
 
 void changeDir(string name) {
@@ -493,4 +499,42 @@ void changeDir(string name) {
         }
     }
     cd(curAddr,name);
+}
+
+// 文件复制 复制file1到file2，如果file2存在则询问是否继续
+bool copy(const string& path1, const string& path2){
+//目录复制要做吗?暂时不做
+//path可以是文件或者目录
+//path1:为文件,则要求path2:前部分为可达目录,最后一项默认为名字
+//达到path2倒数第二目录,尝试以最后项为文件名寻找该目录文件,如果已存在,发出询问
+//path1:为目录,则要求path2:为可达目录
+//达到path2,检查是否与path1为相同目录,是则应拒绝
+//理论方法：创建两个addr变量（inode地址）,调用cd或changeDir找对应inode addr
+//文件复制:类似于创建文件,只需要生成过程改为复制
+//目录复制
+}
+// changeDir的改写 c认为更清晰?
+// int start = 0;
+// for (int i = 0; i < strlen(name.c_str(); i++)){
+//     if (name[i] == '/'){
+//         string tmp = name.substr(start, i);
+//         cd(curAddr, tmp);
+//         start = i+1;
+//     }
+// }
+// cd(curAddr, name);
+
+// cat()(展示文件内容)
+// 判断path是否可达而且为文件
+// 通过inode展示文件内容
+bool cat(const string& path){
+
+}
+//ls （展示所有文件）
+//判断path是否可达而且为目录
+//通过inode展示目录和文件列表 对文件:包括size
+//win风格: 日期 时间 <DIR> size 名字
+//可以按名字排序 
+bool ls(const string& path){
+
 }
