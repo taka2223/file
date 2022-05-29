@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <cstring>
 
 using namespace std;
 extern const std::string DISK_NAME;
@@ -42,13 +43,17 @@ struct Inode {
     int cnt;//若为目录，该目录下有cnt个子目录或文件
     bool isFile;
     time_t ctime;//inode上次改动的时间（创建）
-    time_t mtime;//文件内容上一次修改的时间
-    time_t atime;//上次打开的时间
+    time_t mtime;//文件内容上一次修改的时间（略？）
+    time_t atime;//上次打开的时间（略？）
 };
 struct DirItem{
     //28+4 B
     char name[28]="";
     int inodeAddr=0;
+    // 用于排序的比较函数
+    bool operator<(const DirItem& item) const;
+    bool operator>(const DirItem& item) const;
+    bool operator==(const DirItem& item) const;
 };
 extern SuperBlock superBlock;
 extern int curAddr;//当前目录地址

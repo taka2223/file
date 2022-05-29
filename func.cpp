@@ -299,6 +299,9 @@ bool mkdir(int parent, const string &name)
                     cout << "No Free Blocks" << endl;
                     return false;
                 }
+                blocks[0]=block;
+                f.seekp(indir,ios::beg);
+                f.write((char*)blocks,sizeof(blocks));
                 pos3 = 0;
                 pos2 = 0;
             }
@@ -374,6 +377,8 @@ bool mkdir(int parent, const string &name)
     {
         child.dirBlock[k] = -1;
     }
+    //mk
+    child.indirBlock=-1;
     f.seekp(inodeAddr, ios::beg);
     f.write((char *)&child, sizeof(Inode));
     if (parentInode.dirBlock[pos1] != -1)
@@ -783,6 +788,8 @@ bool toolchangeDir(string name, int &l_curAddr, string &l_curName)
             i = 0;
         }
     }
+    // 理论上不会到这里
+    return false;
 }
 
 bool toolchangeDir(vector<string> elems, bool relative, int &l_curAddr, string &l_curName)
@@ -831,6 +838,7 @@ bool copy(string path1, string path2)
     if (path1.empty() || path2.empty())
     {
         cout << "Invalid path/filename" << endl;
+        return false;
     }
     int addr1 = curAddr;
     int addr2 = curAddr;
@@ -900,7 +908,7 @@ bool copy(string path1, string path2)
     }
     if (toolchangeDir(tmppath, relative, addr2, pth2) == false)
     {
-        cout << "Invalid path/filename" << endl;
+
         return false;
     }
     int parent2 = addr2;
@@ -946,8 +954,9 @@ bool copy(string path1, string path2)
         time(&fileInode2.mtime);
         // 根据size逐个分配block和复制
         //不需要indir的部分
-            int dirblocks[10] = {-1};
-            for (int i = 0; i < fileInode2.size; i++)
+        int dirblocks[10] = {-1};
+        if (fileInode2.size > 0){
+            for (int i = 0; i < fileInode2.size && i < 10; i++)
             {
                 int blockAddr = balloc();
                 if (blockAddr == -1)
@@ -960,9 +969,10 @@ bool copy(string path1, string path2)
                 f.read((char *)buffer, sizeof(buffer));
                 f.seekp(blockAddr, ios::beg);
                 f.write((char *)buffer, sizeof(buffer));
-            }
-            //保存inode dir
-            memcpy(fileInode2.dirBlock, dirblocks, sizeof(dirblocks));
+            }   
+        }
+        //保存inode dir
+        memcpy(fileInode2.dirBlock, dirblocks, sizeof(dirblocks));
         if (fileInode2.size > 10)
         {
             //分配一个indir
@@ -1000,20 +1010,176 @@ bool copy(string path1, string path2)
         f.seekp(addr2, ios::beg);
         f.write((char *)&fileInode2, sizeof(fileInode2));
     }
+    return true;
 }
 // cat()(展示文件内容)
 // 判断path是否可达而且为文件
 // 通过inode展示文件内容
 bool cat(const string &path)
 {
+    if (path.empty()){
+        cout << "Invalid path/filename" << endl;
+        return false;
+    }
+    // int addr = curAddr;
+    // string pth = curName;
+    // 分词确定路径
+    vector<string> tmppath;
+    string fileName;
+    bool relative = true;
+    tmppath = split(path, '/');
+    if (tmppath.empty()){
+        cout << "Invalid path/fileName" << endl;
+        return false;
+    }
+    fileName = tmppath.back();
+    if (fileName.length() > 28){
+        cout << "Exceed the maximum length of file name" << endl;
+        return false;
+    }
+    tmppath.pop_back();
+    if (path.at(0) == '/'){
+        relative = false;
+    }
+    else{
+        relative = true;
+    }
+    if (toolchangeDir(tmppath, relative) == false){
+        cout << "Invalid path/filename" << endl;
+        return false;
+    }
+    int fileAddr = -1;
+    fileAddr = getFileAddr(curAddr, curName);
+    if (fileAddr == -1){
+        cout << "Invalid path/fileName" << endl;
+        return false; 
+    }
+    // 读取inode 展示内容
+    Inode fileInode{};
+    f.seekg(fileAddr, ios::beg);
+    f.read((char *)&fileInode, sizeof(fileInode));
+    char buffer[1024];
+    // dir部分
+    if (fileInode.size > 0){
+        for (int i = 0; i < fileInode.size && i < 10; i++){
+            f.seekg(fileInode.dirBlock[i], ios::beg);
+            f.read((char *)buffer, sizeof(buffer));
+            cout << buffer;
+        }
+    }
+    // indir部分
+    if (fileInode.size > 10){
+        int blocks[256] = {-1};
+        // 读取地址
+        f.seekg(fileInode.indirBlock, ios::beg);
+        f.read((char *)blocks, sizeof(blocks));
+        for (int i=0; i<fileInode.size-10; i++){
+            f.seekg(blocks[i], ios::beg);
+            f.read((char *)buffer, sizeof(buffer));
+            cout << buffer;
+        }
+    }
+    cout << endl;
+    return true;
 }
 //ls （展示所有文件）
 //判断path是否可达而且为目录
 //通过inode展示目录和文件列表 对文件:包括size
 //win风格: 日期 时间 <DIR> size 名字
+//or: size y/m/d time name /
 //可以按名字排序
 bool ls(const string &path)
 {
+    int addr = curAddr;
+    string name = curName;
+    // if (path.empty()){
+    //     cout << "Invalid path" << endl;
+    //     return false;
+    // }
+    // path 允许为空
+    if (!toolchangeDir(path, addr, name)){
+        // cout << "Invalid path" << endl;
+        return false;
+    }
+    // 显示文件名
+    if (name != curName){
+        cout << "showing directory: " << name << endl;
+        // todo 路径格式化函数
+    }
+    // get inode
+    Inode dirInode{};
+    f.seekg(addr, ios::beg);
+    f.read((char *)&dirInode, sizeof(dirInode));
+    // 显示目录内容 size y/m/d time name/
+    DirItem itemsbuf[32];
+    vector<DirItem> allItems = {};
+    // dir部分
+    for (int blockAddr: dirInode.dirBlock){
+        // cout << blockAddr;
+        // system("pause");
+        if (blockAddr == -1){
+            continue;
+        }
+        f.seekg(blockAddr, ios::beg);
+        f.read((char *)itemsbuf, sizeof(itemsbuf));
+        for (DirItem item: itemsbuf){
+            if (strcmp(item.name, "") != 0){
+                allItems.push_back(item);
+            }
+        }
+    }
+    // indir部分
+    if (dirInode.indirBlock != -1){
+        // cout << "indirAddr: " << dirInode.indirBlock << " " << (dirInode.indirBlock - BLOCK_ADD)%BLOCK_SIZE;
+        // system("pause");
+        // 获取地址
+        int blocks[256] = {-1};
+        f.seekg(dirInode.indirBlock, ios::beg);
+        f.read((char *)blocks, sizeof(blocks));
+        for (int blockAddr: blocks){
+            // cout << blockAddr << (blockAddr - BLOCK_ADD)%BLOCK_SIZE;
+            // system("pause");
+            if (blockAddr == -1){
+                continue;
+            }
+            f.seekg(blockAddr, ios::beg);
+            f.read((char *)itemsbuf, sizeof(itemsbuf));
+            for (DirItem item: itemsbuf){
+                if (strcmp(item.name, "") == 0){
+                    allItems.push_back(item);
+                }
+            }
+        }
+    }
+    // 排序
+    sort(allItems.begin(), allItems.end());
+    // 输出
+    Inode tmpInode;
+    struct tm *info;
+    char tbuffer[32];
+    // 表头 (略)
+    // cout << "created time"
+    for (DirItem& item: allItems){
+        // 获取indoe信息
+        f.seekg(item.inodeAddr, ios::beg);
+        f.read((char *)&tmpInode, sizeof(tmpInode));
+        // 获取格式化时间
+        info = localtime(&tmpInode.ctime);
+        strftime(tbuffer, 80, "%Y-%m-%d %H:%M:%S", info);
+        cout << tbuffer << '\t';
+        // size
+        if (tmpInode.isFile){
+            cout << tmpInode.size;
+        }
+        cout << '\t';
+        // name, / for dir
+        cout << item.name;
+        if (!tmpInode.isFile){
+            cout << '/';
+        }
+        cout << "\t\n";
+    }
+    return true;
 }
 int getFileAddr(int parent, const string &name)
 {
@@ -1090,3 +1256,5 @@ vector<string> split(const string &strIn, char delim)
     }
     return elems;
 }
+
+// todo 用blockAddr读取块之前判断地址合法性

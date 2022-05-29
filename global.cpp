@@ -23,3 +23,13 @@ std::fstream f;
 SuperBlock superBlock;
 int curAddr = INODE_BLOCK_ADD;
 string curName =".";
+
+bool DirItem::operator<(const DirItem& item) const{
+    return (strcmp(this->name, item.name) < 0);
+}
+bool DirItem::operator>(const DirItem& item) const{
+    return (strcmp(this->name, item.name) > 0);
+}
+bool DirItem::operator==(const DirItem& item) const{
+    return (strcmp(this->name, item.name) == 0);
+}

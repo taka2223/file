@@ -117,7 +117,43 @@ int main() {
             cout<<tmp[1].name<<endl;
             cout<<tmp[2].name<<endl;
         }
+        else if (input=="cp"){
+            string path1, path2;
+            cin >> path1 >> path2;
+            bool good = false;
+            good = copy(path1, path2);
+            // copy的实现不会改动当前目录。如果要改动可用判断+cd
+            // debug info
+            // 可使用cat验证
+            cout << "debug info" << endl;
+            if (good){
+                cat(path1);
+                cat(path2);
+            }
         }
+        else if (input=="cat"){
+            string path;
+            cin >> path;
+            cat(path);
+        }
+        else if (input=="dir"){
+            //同行输入
+            //cin getlin可用作为之后的优化参考
+            string path;
+            getline(cin, path);
+            // 分词确定参数数量合法
+            vector<string> args;
+            args = split(path, ' ');
+            if (args.size() > 1){
+                cout << "Invalid #args" << endl;
+            }
+            else{
+                ls(path);
+            }
+        }
+
+        
+        }//end while
         
     } else{
         cout<<"Create the disk"<<endl;

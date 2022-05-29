@@ -8,6 +8,7 @@
 #include "global.h"
 #include <cstring>
 #include <vector>
+#include <algorithm>
 
 bool init();
 
