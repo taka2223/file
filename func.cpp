@@ -935,35 +935,44 @@ bool copy(string path1, string path2)
             int newindirof2 = -1;
             // 获取file1的对应addr
             // dir
-            if (fileInode1.size > 0){
-                for (int i=0; i<fileInode1.size; i++){
+            if (fileInode1.size > 0)
+            {
+                for (int i = 0; i < fileInode1.size; i++)
+                {
                     blocksof1.push_back(fileInode1.dirBlock[i]);
                 }
             }
             // indir
-            if (fileInode1.size > 10){
+            if (fileInode1.size > 10)
+            {
                 int blocks[256] = {-1};
                 f.seekg(fileInode1.indirBlock, ios::beg);
                 f.read((char *)blocks, sizeof(blocks));
-                for (int i=0; i < fileInode1.size-10;i++){
+                for (int i = 0; i < fileInode1.size - 10; i++)
+                {
                     blocksof1.push_back(blocks[i]);
                 }
             }
             // 尝试分配所有所需的blocks，如果size》10，也尝试分配一个indir
-            if (fileInode1.size > 10){
+            if (fileInode1.size > 10)
+            {
                 int blockaddr = balloc();
-                if (blockaddr == -1){
-                    return false;   // 此时没有负面效果，可直接返回
+                if (blockaddr == -1)
+                {
+                    return false; // 此时没有负面效果，可直接返回
                 }
                 newindirof2 = blockaddr;
             }
             // 分配block,如果中途失败，需要释放之前所有分配的空间，包括可能的indir
-            for (int i=0; i < fileInode1.size; i++){
+            for (int i = 0; i < fileInode1.size; i++)
+            {
                 int blockaddr = balloc();
-                if (blockaddr == -1){
+                if (blockaddr == -1)
+                {
                     // 复原操作 恢复indir 和 block
                     bfree(newindirof2);
-                    for (int item: blocksof2){
+                    for (int item : blocksof2)
+                    {
                         bfree(item);
                     }
                     return false;
@@ -971,12 +980,14 @@ bool copy(string path1, string path2)
                 blocksof2.push_back(blockaddr);
             }
             // 文件内容复制
-            if (blocksof1.size() != blocksof2.size()){
+            if (blocksof1.size() != blocksof2.size())
+            {
                 cout << "unexpected error during copy" << endl;
                 return false;
             }
             char buffer[1024];
-            for (int i = 0; i < blocksof1.size(); i++){
+            for (int i = 0; i < blocksof1.size(); i++)
+            {
                 f.seekg(blocksof1.at(i), ios::beg);
                 f.read((char *)buffer, sizeof(buffer));
                 f.seekp(blocksof2.at(i), ios::beg);
@@ -987,9 +998,12 @@ bool copy(string path1, string path2)
             f.seekg(addr2, ios::beg);
             f.read((char *)&fileInode2, sizeof(fileInode2));
             // dir
-            if (fileInode2.size > 0){
-                for (int i=0; i < 10 && i<fileInode2.size; i++){
-                    if (!bfree(fileInode2.dirBlock[i])){
+            if (fileInode2.size > 0)
+            {
+                for (int i = 0; i < 10 && i < fileInode2.size; i++)
+                {
+                    if (!bfree(fileInode2.dirBlock[i]))
+                    {
                         cout << "unexpected error during copy" << endl;
                         return false;
                     }
@@ -997,20 +1011,24 @@ bool copy(string path1, string path2)
                 }
             }
             // indir
-            if (fileInode2.size > 10){
+            if (fileInode2.size > 10)
+            {
                 int blocks[256] = {-1};
                 f.seekg(fileInode2.indirBlock, ios::beg);
                 f.read((char *)blocks, sizeof(blocks));
                 // blocks
-                for (int i = 0; i < fileInode2.size - 10; i++){
-                    if (!bfree(blocks[i])){
+                for (int i = 0; i < fileInode2.size - 10; i++)
+                {
+                    if (!bfree(blocks[i]))
+                    {
                         cout << "unexpected error during copy" << endl;
                         return false;
                     }
                     // blocks[i] = -1; indir释放了不用写回
                 }
                 // indir 本身
-                if (!bfree(fileInode2.indirBlock)){
+                if (!bfree(fileInode2.indirBlock))
+                {
                     cout << "unexpected error during copy" << endl;
                     return false;
                 }
@@ -1019,22 +1037,32 @@ bool copy(string path1, string path2)
             // 释放完毕相对于有一个新的inode
             // 按序为dir和indir，indir->blocks赋地址
             // dir
-            for (int i = 0; i < fileInode1.size && i < 10; i++){
-                fileInode2.dirBlock[i] = blocksof2[i];
+            for (int i = 0; i < 10; i++)
+            {
+                if (i < fileInode1.size)
+                {
+                    fileInode2.dirBlock[i] = blocksof2[i];
+                }
+                else
+                { //初始化未使用部分
+                    fileInode2.dirBlock[i] = -1;
+                }
             }
-            // indir,先赋indir本身
-            if (newindirof2 != -1){
-                fileInode2.indirBlock = newindirof2;
+            // indir,先赋indir本身 -1则充当初始化
+            fileInode2.indirBlock = newindirof2;
+            if (newindirof2 != -1) // ->blocks部分
+            {
                 // ->blocks部分直接保存
                 int blocks[256] = {-1};
-                for (int i = 0; i < fileInode1.size - 10; i++){
+                for (int i = 0; i < fileInode1.size - 10; i++)
+                {
                     blocks[i] = blocksof2.at(i + 10);
                 }
                 f.seekp(fileInode2.indirBlock, ios::beg);
                 f.write((char *)blocks, sizeof(blocks));
             }
             // // 设置inode的其他属性
-            fileInode2.size = fileInode1.size;//必须最后
+            fileInode2.size = fileInode1.size; //必须最后
             fileInode2.cnt = fileInode1.cnt;
             fileInode2.isFile = true;
             time(&fileInode2.atime);
@@ -1042,6 +1070,7 @@ bool copy(string path1, string path2)
             // 保存inode2
             f.seekp(addr2, ios::beg);
             f.write((char *)&fileInode2, sizeof(fileInode2));
+            return true;
         }
         else
         {
@@ -1212,7 +1241,99 @@ bool copy(string path1, string path2)
         // 保存parentinode
         f.seekp(parent2, ios::beg);
         f.write((char *)&parentInode2, sizeof(parentInode2));
-        Inode fileInode2{};
+        Inode fileInode2{}; // 新建的不需要读取
+        // mark 复制开始
+        vector<int> blocksof1;
+        vector<int> blocksof2;
+        int newindirof2 = -1;
+        // 获取file1的对应addr
+        // dir
+        if (fileInode1.size > 0)
+        {
+            for (int i = 0; i < fileInode1.size; i++)
+            {
+                blocksof1.push_back(fileInode1.dirBlock[i]);
+            }
+        }
+        // indir
+        if (fileInode1.size > 10)
+        {
+            int blocks[256] = {-1};
+            f.seekg(fileInode1.indirBlock, ios::beg);
+            f.read((char *)blocks, sizeof(blocks));
+            for (int i = 0; i < fileInode1.size - 10; i++)
+            {
+                blocksof1.push_back(blocks[i]);
+            }
+        }
+        // 尝试分配所有所需的blocks，如果size》10，也尝试分配一个indir
+        if (fileInode1.size > 10)
+        {
+            int blockaddr = balloc();
+            if (blockaddr == -1)
+            {
+                return false; // 此时没有负面效果，可直接返回
+            }
+            newindirof2 = blockaddr;
+        }
+        // 分配block,如果中途失败，需要释放之前所有分配的空间，包括可能的indir
+        for (int i = 0; i < fileInode1.size; i++)
+        {
+            int blockaddr = balloc();
+            if (blockaddr == -1)
+            {
+                // 复原操作 恢复indir 和 block
+                bfree(newindirof2);
+                for (int item : blocksof2)
+                {
+                    bfree(item);
+                }
+                return false;
+            }
+            blocksof2.push_back(blockaddr);
+        }
+        // 文件内容复制
+        if (blocksof1.size() != blocksof2.size())
+        {
+            cout << "unexpected error during copy" << endl;
+            return false;
+        }
+        char buffer[1024];
+        for (int i = 0; i < blocksof1.size(); i++)
+        {
+            f.seekg(blocksof1.at(i), ios::beg);
+            f.read((char *)buffer, sizeof(buffer));
+            f.seekp(blocksof2.at(i), ios::beg);
+            f.write((char *)buffer, sizeof(buffer));
+        }
+        // inode2没有原有block需要释放
+        // 按序为dir和indir，indir->blocks赋地址
+        // dir
+        for (int i = 0; i < 10; i++)
+        {
+            if (i < fileInode1.size)
+            {
+                fileInode2.dirBlock[i] = blocksof2[i];
+            }
+            else
+            { //初始化未使用部分
+                fileInode2.dirBlock[i] = -1;
+            }
+        }
+
+        // indir,先赋indir本身 -1则充当初始化
+        fileInode2.indirBlock = newindirof2;
+        if (newindirof2 != -1) // ->blocks部分
+        {
+            // ->blocks部分直接保存
+            int blocks[256] = {-1};
+            for (int i = 0; i < fileInode1.size - 10; i++)
+            {
+                blocks[i] = blocksof2.at(i + 10);
+            }
+            f.seekp(fileInode2.indirBlock, ios::beg);
+            f.write((char *)blocks, sizeof(blocks));
+        }
         // // 设置inode的属性
         fileInode2.id = (addr2 - INODE_BLOCK_ADD) / INODE_SIZE;
         fileInode2.size = fileInode1.size;
@@ -1221,67 +1342,10 @@ bool copy(string path1, string path2)
         time(&fileInode2.ctime);
         time(&fileInode2.atime);
         time(&fileInode2.mtime);
-        // 根据size逐个分配block和复制
-        //不需要indir的部分
-        int dirblocks[10] = {-1};
-        if (fileInode2.size > 0)
-        {
-            for (int i = 0; i < fileInode2.size && i < 10; i++)
-            {
-                int blockAddr = balloc();
-                if (blockAddr == -1)
-                {
-                    return false;
-                }
-
-                dirblocks[i] = blockAddr; //inode dir信息
-                f.seekg(fileInode1.dirBlock[i], ios::beg);
-                f.read((char *)buffer, sizeof(buffer));
-                f.seekp(blockAddr, ios::beg);
-                f.write((char *)buffer, sizeof(buffer));
-            }
-        }
-        //保存inode dir
-        memcpy(fileInode2.dirBlock, dirblocks, sizeof(dirblocks));
-        if (fileInode2.size > 10)
-        {
-            //分配一个indir
-            int indirBlockAddr = balloc();
-            if (indirBlockAddr == -1)
-            {
-                return false;
-            }
-            fileInode2.indirBlock = indirBlockAddr; //
-            //把file1 indir中对应的addr位置取出
-            int blocks1[256] = {-1};
-            f.seekg(fileInode1.indirBlock, ios::beg);
-            f.read((char *)blocks1, sizeof(blocks1));
-            // 分配block和复制内容，block地址暂存到blocks2
-            int blocks2[256] = {-1};
-            for (int i = 0; i < fileInode2.size - 10; i++)
-            {
-                int blockAddr = balloc();
-                if (blockAddr == -1)
-                {
-                    return false;
-                }
-                blocks2[i] = blockAddr;
-                f.seekg(blocks1[i], ios::beg);
-                f.read((char *)buffer, sizeof(buffer));
-                f.seekp(blocks2[i], ios::beg);
-                f.write((char *)buffer, sizeof(buffer));
-            }
-            // 保存blocks2
-            f.seekp(fileInode2.indirBlock, ios::beg);
-            f.write((char *)blocks2, sizeof(blocks2));
-        }
-        else
-        {
-            fileInode2.indirBlock = -1;
-        }
-        //保存inode
+        // 保存inode2
         f.seekp(addr2, ios::beg);
         f.write((char *)&fileInode2, sizeof(fileInode2));
+        return true;
     }
     return true;
 }
