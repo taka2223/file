@@ -1824,58 +1824,81 @@ bool createFile(int parent,const string &name, const int &size){
 }
 }
 
-bool deleteFile(int parent,const string& name){
-    if (name.length() > 28) {
+bool deleteFile(int parent, const string &name)
+{
+    if (name.length() > 28)
+    {
         cout << "Exceed the maximum length of file name" << endl;
         return false;
     }
-    if(!repeat(parent,name,true)){
-        cout<< "Could not find the file"<<endl;
+    if (!repeat(parent, name, true))
+    {
+        cout << "Could not find the file" << endl;
     }
     Inode parentInode{};
-    f.seekg(parent,ios::beg);
-    f.read((char*)&parentInode,sizeof(Inode));
+    f.seekg(parent, ios::beg);
+    f.read((char *)&parentInode, sizeof(Inode));
     DirItem itemList[32];
-    for (int i : parentInode.dirBlock) {
-        if (i==-1){
+    for (int i : parentInode.dirBlock)
+    {
+        if (i == -1)
+        {
             continue;
         }
-        f.seekg(i,ios::beg);
-        f.read((char*)itemList,sizeof(itemList));
-        for (auto & j : itemList) {
-            if (strcmp(j.name,name.c_str())==0){
+        f.seekg(i, ios::beg);
+        f.read((char *)itemList, sizeof(itemList));
+        for (auto &j : itemList)
+        {
+            if (strcmp(j.name, name.c_str()) == 0)
+            {
                 Inode tmp{};
-                f.seekg(j.inodeAddr,ios::beg);
-                f.read((char*)&tmp,sizeof(Inode));
-                if (tmp.isFile){
+                f.seekg(j.inodeAddr, ios::beg);
+                f.read((char *)&tmp, sizeof(Inode));
+                if (tmp.isFile)
+                {
                     //找到文件所在位置
                     deleteF(j.inodeAddr);
-                    cout<<"The file whose inode address is "<<j.inodeAddr<<" has been deleted"<<endl;
-                    return true;
+                    cout << "The file whose inode address is " << j.inodeAddr << " has been deleted" << endl;
+                    strcpy(j.name, "");
+                    j.inodeAddr = 0;
+                    break;
                 }
             }
         }
+        f.seekp(i, ios::beg);
+        f.write((char *)itemList, sizeof(itemList));
+        return true;
     }
-    if (parentInode.indirBlock!=-1){
+    if (parentInode.indirBlock != -1)
+    {
         int blocks[256];
-        f.seekg(parentInode.indirBlock,ios::beg);
-        f.read((char*)blocks,sizeof(blocks));
-        for (int block : blocks) {
-            if ((block-BLOCK_ADD)%BLOCK_SIZE==0){
-                f.seekg(block,ios::beg);
-                f.read((char*)itemList,sizeof(itemList));
-                for (auto & j : itemList) {
-                    if (strcmp(j.name,name.c_str())==0){
+        f.seekg(parentInode.indirBlock, ios::beg);
+        f.read((char *)blocks, sizeof(blocks));
+        for (int block : blocks)
+        {
+            if ((block - BLOCK_ADD) % BLOCK_SIZE == 0)
+            {
+                f.seekg(block, ios::beg);
+                f.read((char *)itemList, sizeof(itemList));
+                for (auto &j : itemList)
+                {
+                    if (strcmp(j.name, name.c_str()) == 0)
+                    {
                         Inode tmp{};
-                        f.seekg(j.inodeAddr,ios::beg);
-                        f.read((char*)&tmp,sizeof(Inode));
-                        if (tmp.isFile){
+                        f.seekg(j.inodeAddr, ios::beg);
+                        f.read((char *)&tmp, sizeof(Inode));
+                        if (tmp.isFile)
+                        {
                             deleteF(j.inodeAddr);
-                            cout<<"The file whose inode address is "<<j.inodeAddr<<" has been deleted"<<endl;
-                            return true;
+                            cout << "The file whose inode address is " << j.inodeAddr << " has been deleted" << endl;
+                            strcpy(j.name, "");
+                            j.inodeAddr = 0;
+                            break;
                         }
                     }
                 }
+                f.seekp(block, ios::beg);
+                f.write((char *)itemList, sizeof(itemList));
             }
         }
     }
