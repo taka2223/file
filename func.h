@@ -38,10 +38,10 @@ bool createDir(string name);
 void cd(int parent,const string& name);
 
 void changeDir(string name);//支持嵌套
-// deleteDir()
-
-// createFile()
-// deleteFile()
+bool deleteDir(int parent,const string& name);
+void deleteF(int inodeAddr);
+bool createFile(int parent,const string& name,const int& filesize);
+bool deleteFile(int parent,const string& name);
 // copy() 复制file1到file2，如果file2存在则询问是否继续
 bool copy(string path1, string path2);
 // cat()(展示文件内容)

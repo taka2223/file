@@ -127,8 +127,8 @@ int main() {
             // 可使用cat验证
             cout << "debug info" << endl;
             if (good){
-                cat(path1);
-                cat(path2);
+                //cat(path1);
+                //cat(path2);
             }
         }
         else if (input=="cat"){
@@ -151,7 +151,26 @@ int main() {
                 ls(path);
             }
         }
-
+        // todo 最终版需要对参数类型进行检查
+        // 例 输入 createFile name dir（非int） bug
+        else if (input=="createFile"){
+            string name;
+            int size;
+            cin>>name>>size;
+            cout << size;
+            system("pause");
+            createFile(curAddr,name,size);
+        }
+        else if(input=="deleteDir"){
+            string name;
+            cin>>name;
+            deleteDir(curAddr,name);
+        }
+        else if(input=="deleteFile"){
+            string name;
+            cin>>name;
+            deleteFile(curAddr,name);
+        }
         
         }//end while
         

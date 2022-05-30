@@ -18,7 +18,7 @@ extern const int BLOCK_SIZE;
 extern const int BLOCK_NUM;
 extern const int INODE_SIZE; //单个inode最大大小，不是固定的大小
 extern const int INODE_NUM;  // inode最大数量，即文件最大数量
-
+extern const int MAX_FILE_SIZE;//单个文件最大空间，以KB为单位
 extern const int SUPER_BLOCK_ADD;
 extern const int INODE_BITMAP_ADD; // indoe bitmap的开始地址，bitmap大小为1个block,可以监控1024个inode的状态
 extern const int BLOCK_BITMAP_ADD; // block bitmap的开始地址，bitmap大小为20个block，可以监控20480个block的状态
@@ -49,7 +49,7 @@ struct Inode {
 struct DirItem{
     //28+4 B
     char name[28]="";
-    int inodeAddr=0;
+    int inodeAddr=-1;
     // 用于排序的比较函数
     bool operator<(const DirItem& item) const;
     bool operator>(const DirItem& item) const;

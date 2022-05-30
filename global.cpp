@@ -9,7 +9,7 @@ const int BLOCK_SIZE = 1024;
 const int BLOCK_NUM = 16384;
 const int INODE_SIZE = 128; //单个inode最大大小，不是固定的大小
 const int INODE_NUM = 1024; // inode最大数量，即文件最大数量
-
+const int MAX_FILE_SIZE=266;
 const int BLOCKS_PER_GROUP = 128;
 const int SUPER_BLOCK_ADD = 0;
 const int INODE_BITMAP_ADD = SUPER_BLOCK_ADD + 4*BLOCKS_PER_GROUP*sizeof(int);                              // indoe bitmap的开始地址，bitmap大小为1个block,可以监控1024个inode的状态
