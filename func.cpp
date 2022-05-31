@@ -249,6 +249,8 @@ bool mkdir(int parent, const string &name)
     }
     if (repeat(parent, name, false))
     {
+        // debug mkdir
+        cout << "Directory already exists" << endl;
         return false;
     }
     int pos1 = -1, pos2 = -1;
@@ -670,20 +672,41 @@ bool toolcd(const string &name, int &l_curAddr, string &l_curName)
                     }
                     else if (strcmp(j.name, "..") == 0)
                     {
+                        // cout << "debug toolcd";
+                        // cout << "1";
+                        // cout << l_curName;
                         int k;
+                        // // 更改:为了显示功能(根目录)
+                        // if (l_curName == "/")
+                        // {
+                        //     cout << "debug toolcd";
+                        //     cout << "2";
+                        //     return true;
+                        // }
+                        // end
                         for (k = strlen(l_curName.c_str()); k >= 0; k--)
                         {
                             if (l_curName[k] == '/')
                                 break;
                         }
                         l_curName = l_curName.substr(0, k);
+                        // 显示功能更改：为了根目录
+                        if (l_curName == "")
+                        {
+                            l_curName = "/";
+                        } //end
                         l_curAddr = j.inodeAddr;
                         return true;
                     }
                     else
                     {
                         l_curAddr = j.inodeAddr;
-                        l_curName.append("/");
+                        // 更改:为了显示功能
+                        if (l_curName.back() != '/')
+                        {
+                            l_curName.append("/");
+                        }
+                        // end
                         l_curName.append(j.name);
                         return true;
                     }
@@ -719,19 +742,35 @@ bool toolcd(const string &name, int &l_curAddr, string &l_curName)
                             else if (strcmp(j.name, "..") == 0)
                             {
                                 int k;
+                                // // 更改:为了显示功能(根目录)
+                                // if (l_curName == "/")
+                                // {
+                                //     return true;
+                                // }
+                                // // end
                                 for (k = strlen(l_curName.c_str()); k >= 0; k--)
                                 {
                                     if (l_curName[k] == '/')
                                         break;
                                 }
                                 l_curName = l_curName.substr(0, k);
+                                // 显示功能更改：为了根目录
+                                if (l_curName == "")
+                                {
+                                    l_curName = "/";
+                                } //end
                                 l_curAddr = j.inodeAddr;
                                 return true;
                             }
                             else
                             {
                                 l_curAddr = j.inodeAddr;
-                                l_curName.append("/");
+                                // 更改:为了显示功能
+                                if (l_curName.back() != '/')
+                                {
+                                    l_curName.append("/");
+                                }
+                                // end
                                 l_curName.append(j.name);
                                 return true;
                             }
@@ -991,10 +1030,10 @@ bool copy(string path1, string path2)
             }
             // 文件内容复制
             if (blocksof1.size() != blocksof2.size())
-            {   
+            {
                 // debug info
-                cout << "1: "<<fileInode1.size << endl;
-                cout << "1: "<<blocksof1.size() <<"\n2: " << blocksof2.size(); 
+                // cout << "1: " << fileInode1.size << endl;
+                // cout << "1: " << blocksof1.size() << "\n2: " << blocksof2.size();
                 cout << "unexpected error during copy" << endl;
                 return false;
             }
@@ -1279,7 +1318,7 @@ bool copy(string path1, string path2)
                 blocksof1.push_back(blocks[i]);
             }
         }
-        // 尝试分配所有所需的blocks，如果size》10，也尝试分配一个indir
+        // 尝试分配所有所需的blocks，如果size>10，也尝试分配一个indir
         if (fileInode1.size > 10)
         {
             int blockaddr = balloc();
@@ -1401,6 +1440,10 @@ bool cat(const string &path)
     }
     if (toolchangeDir(tmppath, relative) == false)
     {
+        // cout << "debug cat";
+        // for (string s: tmppath){
+        //     cout << s << " ";
+        // } 
         cout << "Invalid path/filename3" << endl;
         return false;
     }
@@ -1410,6 +1453,8 @@ bool cat(const string &path)
     {
         cout << "Invalid path/fileName4" << endl;
         // 应尝试返回原目录
+        // cout << "debugcat";
+        // cout << curAddr;
         curAddr = addrBackup;
         curName = nameBackup;
         return false;
@@ -1418,15 +1463,18 @@ bool cat(const string &path)
     Inode fileInode{};
     f.seekg(fileAddr, ios::beg);
     f.read((char *)&fileInode, sizeof(fileInode));
-    char buffer[1024];
+    char buffer[1025];
+    buffer[1024] = '\0';
     // dir部分
     if (fileInode.size > 0)
     {
         for (int i = 0; i < fileInode.size && i < 10; i++)
         {
+            // cout <<"debug cat" << fileInode.dirBlock[i] << endl;;
             f.seekg(fileInode.dirBlock[i], ios::beg);
-            f.read((char *)buffer, sizeof(buffer));
+            f.read((char *)buffer, 1024);
             cout << buffer;
+            // cout << endl;
         }
     }
     // indir部分
@@ -1438,9 +1486,11 @@ bool cat(const string &path)
         f.read((char *)blocks, sizeof(blocks));
         for (int i = 0; i < fileInode.size - 10; i++)
         {
+            // cout <<"debug cat" << fileInode.dirBlock[i] << endl;;
             f.seekg(blocks[i], ios::beg);
-            f.read((char *)buffer, sizeof(buffer));
+            f.read((char *)buffer, 1024);
             cout << buffer;
+            // cout << endl;
         }
     }
     cout << endl;
@@ -1470,7 +1520,6 @@ bool ls(const string &path)
     if (name != curName)
     {
         cout << "showing directory: " << name << endl;
-        // todo 路径格式化函数
     }
     // get inode
     Inode dirInode{};
@@ -1635,80 +1684,106 @@ vector<string> split(const string &strIn, char delim)
     return elems;
 }
 
-bool createFile(int parent,const string &name, const int &size){
-    if (name.length() > 28) {
+bool createFile(int parent, const string &name, const int &size)
+{
+    if (name.length() > 28)
+    {
         cout << "Exceed the maximum length of file name" << endl;
         return false;
     }
     // todo error:createFile name dir
-    if(size>MAX_FILE_SIZE){
+    if (size > MAX_FILE_SIZE)
+    {
         cout << "Exceed the maximum size of a file " << endl;
         return false;
     }
-    if (repeat(parent,name, true)){
-        cout<< "File existed" << endl;
+    if (repeat(parent, name, true))
+    {
+        cout << "File existed" << endl;
         return false;
     }
     Inode parentInode{};
-    f.seekg(parent,ios::beg);
-    f.read((char*)&parentInode,sizeof(Inode));
-    int pos1=-1,pos2=-1;
+    f.seekg(parent, ios::beg);
+    f.read((char *)&parentInode, sizeof(Inode));
+    int pos1 = -1, pos2 = -1;
     DirItem itemList[32];
-    for (int i = 0; i <10; ++i) {
-        if ((parentInode.dirBlock[i]-BLOCK_ADD)%BLOCK_SIZE==0){
-            f.seekg(parentInode.dirBlock[i],ios::beg);
-            f.read((char*)itemList,sizeof(itemList));
-            for (int j = 0; j <32 ; ++j) {
-                if (strcmp(itemList[j].name,"")==0){
+    for (int i = 0; i < 10; ++i)
+    {
+        if ((parentInode.dirBlock[i] - BLOCK_ADD) % BLOCK_SIZE == 0)
+        {
+            f.seekg(parentInode.dirBlock[i], ios::beg);
+            f.read((char *)itemList, sizeof(itemList));
+            for (int j = 0; j < 32; ++j)
+            {
+                if (strcmp(itemList[j].name, "") == 0)
+                {
                     pos1 = i;
                     pos2 = j;
-                    i=10;
+                    i = 10;
                     break;
                 }
             }
-        } else{
-            if (pos1==-1){
+        }
+        else
+        {
+            if (pos1 == -1)
+            {
                 pos1 = i;
                 pos2 = 0;
             }
         }
     }
     //需要indirBlock
-    int pos3=-1;//indirect block的序号
-    if (pos1==-1){
-        int blocks[256]={-1};
-        if (parentInode.indirBlock==-1){
+    int pos3 = -1; //indirect block的序号
+    if (pos1 == -1)
+    {
+        int blocks[256] = {-1};
+        if (parentInode.indirBlock == -1)
+        {
             int indir = balloc();
-            if (indir!=-1){
+            if (indir != -1)
+            {
                 parentInode.indirBlock = indir;
                 int block = balloc();
-                if (block==-1){
-                    cout<<"No Free Blocks"<<endl;
+                if (block == -1)
+                {
+                    cout << "No Free Blocks" << endl;
                     return false;
                 }
                 pos3 = 0;
                 pos2 = 0;
-            } else{
-                cout<<"Block allocation error"<<endl;
+            }
+            else
+            {
+                cout << "Block allocation error" << endl;
                 return false;
             }
-        } else{
-            f.seekg(parentInode.indirBlock,ios::beg);
-            f.read((char*)blocks,sizeof(blocks));
-            for (int i = 0; i <256 ; ++i) {
-                if ((blocks[i]-BLOCK_ADD)%BLOCK_SIZE==0){
-                    f.seekg(blocks[i],ios::beg);
-                    f.read((char*)itemList,sizeof(itemList));
-                    for (int j = 0; j <32 ; ++j) {
-                        if (strcmp(itemList[j].name,"")==0){
+        }
+        else
+        {
+            f.seekg(parentInode.indirBlock, ios::beg);
+            f.read((char *)blocks, sizeof(blocks));
+            for (int i = 0; i < 256; ++i)
+            {
+                if ((blocks[i] - BLOCK_ADD) % BLOCK_SIZE == 0)
+                {
+                    f.seekg(blocks[i], ios::beg);
+                    f.read((char *)itemList, sizeof(itemList));
+                    for (int j = 0; j < 32; ++j)
+                    {
+                        if (strcmp(itemList[j].name, "") == 0)
+                        {
                             pos3 = i;
                             pos2 = j;
-                            i=256;
+                            i = 256;
                             break;
                         }
                     }
-                } else{
-                    if (pos3==-1){
+                }
+                else
+                {
+                    if (pos3 == -1)
+                    {
                         pos3 = i;
                         pos2 = 0;
                     }
@@ -1716,112 +1791,143 @@ bool createFile(int parent,const string &name, const int &size){
             }
         }
     }
-    if (pos3==-1&&pos1==-1){
-        cout<<"No free blocks"<<endl;
+    if (pos3 == -1 && pos1 == -1)
+    {
+        cout << "No free blocks" << endl;
         return false;
     }
     //创建inode
-    Inode  child{};
+    Inode child{};
     int inodeAddr = ialloc();
     cout << "inodeAddr: " << inodeAddr << endl;
     int blockadd[size];
-    for(int i=0;i<size;++i){   
+    for (int i = 0; i < size; ++i)
+    {
         int blockAddr = balloc();
-        blockadd[i]=blockAddr;
+        blockadd[i] = blockAddr;
         cout << "blockAddr:" << blockAddr << endl;
-        if (inodeAddr == -1 || blockAddr == -1) {
-        cout << "Allocation error" << endl;
-        return false;
+        if (inodeAddr == -1 || blockAddr == -1)
+        {
+            cout << "Allocation error" << endl;
+            return false;
         }
     }
-    for(int i=0;i<size;++i){
-        f.seekp(blockadd[i],ios::beg);
-        srand(time(0));
-        char temp[1024];
-        for(int j=0;j<1024;++j){
-             temp[j]=char('a'+rand()%26);
-        }   
-        f.write((char*)temp,sizeof(temp));
+    for (int i = 0; i < size; ++i)
+    {
+        f.seekp(blockadd[i], ios::beg);
+        if (i == 0)
+            srand(time(0));
+        
+        // todo 改回去
+        // char temp[1024];
+        // for (int j = 0; j < 1024; ++j)
+        // {
+        //     temp[j] = char('a' + rand() % 26);
+        // }
+        // f.write((char *)temp, sizeof(temp));
+        char temp[1025];
+        temp[1024] = 0;
+        for (int j = 0; j < 1024; ++j)
+        {
+            temp[j] = char('a' + rand() % 26);
+        }
+        f.write((char *)temp, 1024);
+        cout << temp << endl;
     }
-    if(size<=10){
-        for(int i=0;i<size;i++){
-            child.dirBlock[i]=blockadd[i];
+    if (size <= 10)
+    {
+        for (int i = 0; i < size; i++)
+        {
+            child.dirBlock[i] = blockadd[i];
         }
-        for(int i=size;i<10;i++){
-            child.dirBlock[i]=-1;
+        for (int i = size; i < 10; i++)
+        {
+            child.dirBlock[i] = -1;
         }
-        child.indirBlock=-1;
-    }//只需要用到直接块
-    else{
-        for(int i=0;i<10;i++){
-            child.dirBlock[i]=blockadd[i];
+        child.indirBlock = -1;
+    } //只需要用到直接块
+    else
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            child.dirBlock[i] = blockadd[i];
         }
-        int indirectblock=balloc();
+        int indirectblock = balloc();
         int blocks[256];
-        for(int i=10;i<size;i++){
-            blocks[i-10]=blockadd[i];
+        for (int i = 10; i < size; i++)
+        {
+            blocks[i - 10] = blockadd[i];
         }
-        for(int i=size-10;i<256;i++){
-            blocks[i]=-1;
+        for (int i = size - 10; i < 256; i++)
+        {
+            blocks[i] = -1;
         }
-        child.indirBlock=indirectblock;
-        f.seekp(indirectblock,ios::beg);
-        f.write((char*)blocks,sizeof(blocks));
+        child.indirBlock = indirectblock;
+        f.seekp(indirectblock, ios::beg);
+        f.write((char *)blocks, sizeof(blocks));
     }
-    child.id = (inodeAddr-INODE_BLOCK_ADD)/INODE_SIZE;
+    child.id = (inodeAddr - INODE_BLOCK_ADD) / INODE_SIZE;
     time(&child.ctime);
     time(&child.atime);
     time(&child.mtime);
-    child.isFile=true;
-    child.size=size;
-    f.seekp(inodeAddr,ios::beg);
-    f.write((char*)&child,sizeof(Inode));
+    child.isFile = true;
+    child.size = size;
+    f.seekp(inodeAddr, ios::beg);
+    f.write((char *)&child, sizeof(Inode));
     //写入文件信息
 
-    if (parentInode.dirBlock[pos1]!=-1){
-        f.seekg(parentInode.dirBlock[pos1],ios::beg);
-        f.read((char*)itemList,sizeof(itemList));
-        strcpy(itemList[pos2].name,name.c_str());
+    if (parentInode.dirBlock[pos1] != -1)
+    {
+        f.seekg(parentInode.dirBlock[pos1], ios::beg);
+        f.read((char *)itemList, sizeof(itemList));
+        strcpy(itemList[pos2].name, name.c_str());
         itemList[pos2].inodeAddr = inodeAddr;
-        f.seekp(parentInode.dirBlock[pos1],ios::beg);
-        f.write((char*)itemList,sizeof(itemList));
-    } else if (pos1!=-1){
+        f.seekp(parentInode.dirBlock[pos1], ios::beg);
+        f.write((char *)itemList, sizeof(itemList));
+    }
+    else if (pos1 != -1)
+    {
         int tmpBlock = balloc();
-        DirItem tmpList[32]={0};
-        if (tmpBlock==-1){
-            cout<<"No Free Blocks"<<endl;
+        DirItem tmpList[32] = {0};
+        if (tmpBlock == -1)
+        {
+            cout << "No Free Blocks" << endl;
             return false;
         }
-        parentInode.dirBlock[pos1]=tmpBlock;
-        tmpList[0].inodeAddr=inodeAddr;
-        strcpy(tmpList[0].name,name.c_str());
-        f.seekp(tmpBlock,ios::beg);
-        f.write((char*)tmpList,sizeof(tmpList));
-    } else if (pos3!=-1){
+        parentInode.dirBlock[pos1] = tmpBlock;
+        tmpList[0].inodeAddr = inodeAddr;
+        strcpy(tmpList[0].name, name.c_str());
+        f.seekp(tmpBlock, ios::beg);
+        f.write((char *)tmpList, sizeof(tmpList));
+    }
+    else if (pos3 != -1)
+    {
         int blocks[256];
-        DirItem tmpList[32]={0};
-        f.seekg(parentInode.indirBlock,ios::beg);
-        f.read((char*)blocks,sizeof(blocks));
-        if (blocks[pos3]==-1){
+        DirItem tmpList[32] = {0};
+        f.seekg(parentInode.indirBlock, ios::beg);
+        f.read((char *)blocks, sizeof(blocks));
+        if (blocks[pos3] == -1)
+        {
             int tmp = balloc();
-            if (tmp==-1){
-                cout<<"No free blocks"<<endl;
+            if (tmp == -1)
+            {
+                cout << "No free blocks" << endl;
             }
-            blocks[pos3]=tmp;
+            blocks[pos3] = tmp;
         }
-        f.seekg(blocks[pos3],ios::beg);
-        f.read((char*)tmpList,sizeof(tmpList));
-        tmpList[pos2].inodeAddr=inodeAddr;
-        strcpy(tmpList[pos2].name,name.c_str());
-        f.seekp(blocks[pos3],ios::beg);
-        f.write((char*)tmpList,sizeof(tmpList));
+        f.seekg(blocks[pos3], ios::beg);
+        f.read((char *)tmpList, sizeof(tmpList));
+        tmpList[pos2].inodeAddr = inodeAddr;
+        strcpy(tmpList[pos2].name, name.c_str());
+        f.seekp(blocks[pos3], ios::beg);
+        f.write((char *)tmpList, sizeof(tmpList));
 
-     //更新当前目录信息
-    parentInode.cnt++;
-    f.seekp(parent,ios::beg);
-    f.write((char*)&parentInode,sizeof(parentInode));
-    return true;
-}
+        //更新当前目录信息
+        parentInode.cnt++;
+        f.seekp(parent, ios::beg);
+        f.write((char *)&parentInode, sizeof(parentInode));
+        return true;
+    }
 }
 
 bool deleteFile(int parent, const string &name)
@@ -1903,106 +2009,127 @@ bool deleteFile(int parent, const string &name)
         }
     }
 }
-void deleteF(int inodeAddr){
+void deleteF(int inodeAddr)
+{
     Inode file{};
-    f.seekg(inodeAddr,ios::beg);
-    f.read((char*)&file,sizeof(Inode));
+    f.seekg(inodeAddr, ios::beg);
+    f.read((char *)&file, sizeof(Inode));
     DirItem itemList[32];
-    vector<int>blockAddrs;
-    for(int i:file.dirBlock){
-        if(i==-1){
+    vector<int> blockAddrs;
+    for (int i : file.dirBlock)
+    {
+        if (i == -1)
+        {
             break;
         }
         blockAddrs.push_back(i);
     }
-    if(file.indirBlock!=-1){
+    if (file.indirBlock != -1)
+    {
         int blocks[256];
-        f.seekg(file.indirBlock,ios::beg);
-        f.read((char*)blocks,sizeof(blocks));
-        for(int block:blocks){
-            if ((block-BLOCK_ADD)%BLOCK_SIZE==0){
+        f.seekg(file.indirBlock, ios::beg);
+        f.read((char *)blocks, sizeof(blocks));
+        for (int block : blocks)
+        {
+            if ((block - BLOCK_ADD) % BLOCK_SIZE == 0)
+            {
                 blockAddrs.push_back(block);
             }
         }
+    bfree(file.indirBlock);
     }
     ifree(inodeAddr);
-    cout<<"Inode at "<< inodeAddr <<" has been released" << endl;
-    for(int block:blockAddrs){
+    cout << "Inode at " << inodeAddr << " has been released" << endl;
+    for (int block : blockAddrs)
+    {
         bfree(block);
-        cout<<"Block at "<< block <<" has been released" << endl;
+        cout << "Block at " << block << " has been released" << endl;
     }
+    
 }
-bool deleteDir(int parent,const string& name){
-    if (name.length() > 28) {
+bool deleteDir(int parent, const string &name)
+{
+    if (name.length() > 28)
+    {
         cout << "Exceed the maximum length of file name" << endl;
         return false;
     }
-    if (!repeat(parent,name,false)){
-        cout<<"Could not find the directory"<< endl;
-        return false;       
+    if (!repeat(parent, name, false))
+    {
+        cout << "Could not find the directory" << endl;
+        return false;
     }
     Inode parentInode{};
-    f.seekg(parent,ios::beg);
-    f.read((char*)&parentInode,sizeof(Inode));
+    f.seekg(parent, ios::beg);
+    f.read((char *)&parentInode, sizeof(Inode));
     int inodeAddr;
     DirItem itemList[32];
-    for (int i : parentInode.dirBlock) {
-      
-        if (i==-1){
+    for (int i : parentInode.dirBlock)
+    {
+
+        if (i == -1)
+        {
             continue;
         }
-        f.seekg(i,ios::beg);
-        f.read((char*)itemList,sizeof(itemList));
-        for (auto & j : itemList) {
-            if (strcmp(j.name,name.c_str())==0){
+        f.seekg(i, ios::beg);
+        f.read((char *)itemList, sizeof(itemList));
+        for (auto &j : itemList)
+        {
+            if (strcmp(j.name, name.c_str()) == 0)
+            {
                 Inode tmp{};
-                f.seekg(j.inodeAddr,ios::beg);
-                f.read((char*)&tmp,sizeof(Inode));
-                if (!tmp.isFile){
+                f.seekg(j.inodeAddr, ios::beg);
+                f.read((char *)&tmp, sizeof(Inode));
+                if (!tmp.isFile)
+                {
                     //找到了需要删除的目录
-                    inodeAddr=j.inodeAddr;
-                    cout<<"The inode address of the directory is "<<inodeAddr<<endl;
+                    inodeAddr = j.inodeAddr;
+                    cout << "The inode address of the directory is " << inodeAddr << endl;
                     //将父目录的item信息更新
-                    strcpy(j.name,"");
-                    j.inodeAddr=0;
+                    strcpy(j.name, "");
+                    j.inodeAddr = 0;
                 }
             }
         }
-        f.seekp(i,ios::beg);
-        f.write((char*)itemList,sizeof(itemList));
+        f.seekp(i, ios::beg);
+        f.write((char *)itemList, sizeof(itemList));
     }
-    if (parentInode.indirBlock!=-1){
+    if (parentInode.indirBlock != -1)
+    {
         int blocks[256];
-        f.seekg(parentInode.indirBlock,ios::beg);
-        f.read((char*)blocks,sizeof(blocks));
-        for (int block : blocks) {
-            if ((block-BLOCK_ADD)%BLOCK_SIZE==0){
-                f.seekg(block,ios::beg);
-                f.read((char*)itemList,sizeof(itemList));
-                for (auto & j : itemList) {
-                    if (strcmp(j.name,name.c_str())==0){
+        f.seekg(parentInode.indirBlock, ios::beg);
+        f.read((char *)blocks, sizeof(blocks));
+        for (int block : blocks)
+        {
+            if ((block - BLOCK_ADD) % BLOCK_SIZE == 0)
+            {
+                f.seekg(block, ios::beg);
+                f.read((char *)itemList, sizeof(itemList));
+                for (auto &j : itemList)
+                {
+                    if (strcmp(j.name, name.c_str()) == 0)
+                    {
                         Inode tmp{};
-                        f.seekg(j.inodeAddr,ios::beg);
-                        f.read((char*)&tmp,sizeof(Inode));
-                        if (!tmp.isFile){
-                            inodeAddr=j.inodeAddr;
-                            cout<<"The Indirinode address of the directory is "<<inodeAddr<<endl;
-                             //将父目录的item信息更新
-                            strcpy(j.name,"");
-                            j.inodeAddr=0;
-
+                        f.seekg(j.inodeAddr, ios::beg);
+                        f.read((char *)&tmp, sizeof(Inode));
+                        if (!tmp.isFile)
+                        {
+                            inodeAddr = j.inodeAddr;
+                            cout << "The Indirinode address of the directory is " << inodeAddr << endl;
+                            //将父目录的item信息更新
+                            strcpy(j.name, "");
+                            j.inodeAddr = 0;
                         }
                     }
                 }
-                f.seekp(block,ios::beg);
-                f.write((char*)itemList,sizeof(itemList));
+                f.seekp(block, ios::beg);
+                f.write((char *)itemList, sizeof(itemList));
             }
         }
-
     }
     Inode dirInode{};
-    f.seekg(inodeAddr,ios::beg);
-    f.read((char*)&dirInode,sizeof(Inode));
+    f.seekg(inodeAddr, ios::beg);
+    f.read((char *)&dirInode, sizeof(Inode));
     //查找目标目录的内容
     /*
     cout<<"When deleteDir"<<endl;
@@ -2016,83 +2143,99 @@ bool deleteDir(int parent,const string& name){
     cout<<"cnt: "<<dirInode.cnt<<endl;
     */
     DirItem itemList2[32];
-    for (int j=0;j<10;j++) {
-        int i=dirInode.dirBlock[j];
-        if (i==-1){
+    for (int j = 0; j < 10; j++)
+    {
+        int i = dirInode.dirBlock[j];
+        if (i == -1)
+        {
             continue;
         }
-        f.seekg(i,ios::beg);
-        f.read((char*)itemList,sizeof(itemList));
-        for (auto & j : itemList) {
-            if(j.inodeAddr!=-1){
+        f.seekg(i, ios::beg);
+        f.read((char *)itemList, sizeof(itemList));
+        for (auto &j : itemList)
+        {
+            if (j.inodeAddr != -1)
+            {
                 Inode tmp{};
-                f.seekg(j.inodeAddr,ios::beg);
-                f.read((char*)&tmp,sizeof(Inode));
-                if(tmp.isFile){
+                f.seekg(j.inodeAddr, ios::beg);
+                f.read((char *)&tmp, sizeof(Inode));
+                if (tmp.isFile)
+                {
                     //删除文件，调用删除文件函数
                     deleteF(j.inodeAddr);
-                }  
-                else{
+                }
+                else
+                {
                     //递归调用删除目录函数，删除当前子目录
-                    if(strcmp(j.name, ".") == 0){
-                       continue;
-                    }
-                    else if(strcmp(j.name, "..") == 0){
+                    if (strcmp(j.name, ".") == 0)
+                    {
                         continue;
                     }
-                    else{
-                        deleteDir(inodeAddr,j.name);
+                    else if (strcmp(j.name, "..") == 0)
+                    {
+                        continue;
                     }
+                    else
+                    {
+                        deleteDir(inodeAddr, j.name);
                     }
-                        
                 }
+            }
         }
         bfree(i);
-        cout<<"Block at "<<i<<" has been released"<<endl;
+        cout << "Block at " << i << " has been released" << endl;
     }
-    if (dirInode.indirBlock!=-1){
+    if (dirInode.indirBlock != -1)
+    {
         int blocks[256];
-        f.seekg(dirInode.indirBlock,ios::beg);
-        f.read((char*)blocks,sizeof(blocks));
-        for (int block : blocks) {
-            if ((block-BLOCK_ADD)%BLOCK_SIZE==0){
-                if(block>0){
-                    f.seekg(block,ios::beg);
-                    f.read((char*)itemList,sizeof(itemList));
-                    for (auto & j : itemList) {
-                        if(j.inodeAddr>0){
+        f.seekg(dirInode.indirBlock, ios::beg);
+        f.read((char *)blocks, sizeof(blocks));
+        for (int block : blocks)
+        {
+            if ((block - BLOCK_ADD) % BLOCK_SIZE == 0)
+            {
+                if (block > 0)
+                {
+                    f.seekg(block, ios::beg);
+                    f.read((char *)itemList, sizeof(itemList));
+                    for (auto &j : itemList)
+                    {
+                        if (j.inodeAddr > 0)
+                        {
                             Inode tmp{};
-                            f.seekg(j.inodeAddr,ios::beg);
-                            f.read((char*)&tmp,sizeof(Inode));
-                            if(tmp.isFile){
+                            f.seekg(j.inodeAddr, ios::beg);
+                            f.read((char *)&tmp, sizeof(Inode));
+                            if (tmp.isFile)
+                            {
                                 //删除文件，调用删除文件函数
                                 deleteF(j.inodeAddr);
-                            }  
-                            else{
+                            }
+                            else
+                            {
                                 //递归调用删除目录函数，删除当前子目录
-                                if(strcmp(j.name, ".") == 0){
+                                if (strcmp(j.name, ".") == 0)
+                                {
                                     continue;
                                 }
-                                else if(strcmp(j.name, "..") == 0){
+                                else if (strcmp(j.name, "..") == 0)
+                                {
                                     continue;
                                 }
-                                else{
-                                    deleteDir(inodeAddr,j.name);
+                                else
+                                {
+                                    deleteDir(inodeAddr, j.name);
                                 }
                             }
-                            
                         }
                     }
-                bfree(block);
-                cout<<"INBlock at "<<block<<" has been released"<<endl;      
+                    bfree(block);
+                    cout << "INBlock at " << block << " has been released" << endl;
                 }
-                
             }
-        
         }
     }
     ifree(inodeAddr);
-    cout<<"The inode at "<<inodeAddr<<" has been released"<<endl;
-    cout<<"The directory has been deleted"<< endl;
+    cout << "The inode at " << inodeAddr << " has been released" << endl;
+    cout << "The directory has been deleted" << endl;
     return true;
 }

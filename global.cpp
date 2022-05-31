@@ -22,7 +22,7 @@ std::vector<char> blockBitMap(BLOCK_NUM, 0);
 std::fstream f;
 SuperBlock superBlock;
 int curAddr = INODE_BLOCK_ADD;
-string curName =".";
+string curName ="/";
 
 bool DirItem::operator<(const DirItem& item) const{
     return (strcmp(this->name, item.name) < 0);

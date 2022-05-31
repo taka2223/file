@@ -47,7 +47,7 @@ bool copy(string path1, string path2);
 // cat()(展示文件内容)
 bool cat(const string& path);
 //ls （展示所有文件）
-bool ls(const string& path);
+bool ls(const string& path = "");
 // utils
 // 逐层定位目录的工具cd，行为逻辑同cd
 // 添加:无法进行该次定位返回false, 通过引用修改输入的addr和name

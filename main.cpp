@@ -3,6 +3,14 @@
 
 using namespace std;
 
+bool preparecmd(string& input, string path){
+    cout << path << ": ";
+    bool res = true;
+    getline(cin, input);
+    res = !(input == "exit");
+    return res;
+}
+
 int main() {
     f.open(DISK_NAME, ios::in | ios::out | ios::binary);
     if (f) {
@@ -169,10 +177,14 @@ int main() {
 //        }
 //
 //        }//end while
-        while (getline(cin, input) && strcmp(input.c_str(), "exit") != 0) {
-            cout<<curName<<": ";
+        // while (preparecmd(input, curName) && strcmp(input.c_str(), "exit") != 0) {
+        while (preparecmd(input, curName)) {
+            if (strcmp(input.c_str(), "") == 0){
+                continue;
+            }
             vector<string> args;
             args = split(input, ' ');
+            //cout << "1";
             if (strcmp("createFile", args[0].c_str()) == 0) {
                 if (args.size() != 3) {
                     cout << "Invalid input" << endl;
@@ -224,7 +236,7 @@ int main() {
                     continue;
                 }
                 deleteFile(curAddr,fileName);
-            } else if (strcmp("createDir", args[0].c_str()) == 0) {
+            } else if (strcmp("createDir", args[0].c_str()) == 0 || strcmp("mkdir", args[0].c_str()) == 0) {
                 if (args.size() != 2) {
                     cout << "Invalid input" << endl;
                     continue;
@@ -270,7 +282,7 @@ int main() {
                     continue;
                 }
                 deleteDir(curAddr,fileName);
-            } else if (strcmp("changeDir", args[0].c_str()) == 0) {
+            } else if (strcmp("changeDir", args[0].c_str()) == 0 || strcmp("cd", args[0].c_str()) == 0) {
                 if (args.size() != 2) {
                     cout << "Invalid input" << endl;
                     continue;
@@ -281,7 +293,7 @@ int main() {
                     cout << "Invalid input" << endl;
                     continue;
                 }
-                ls(curName);
+                ls();
             } else if (strcmp("cp", args[0].c_str()) == 0) {
                 if (args.size() != 3) {
                     cout << "Invalid input" << endl;
@@ -301,7 +313,10 @@ int main() {
                 }
                 cat(args[1]);
             }
-        }
+            //cout << "2";
+            // cout<<curName<<": ";
+            // getline(cin, input);
+        }//end while
     } else {
         cout << "Create the disk" << endl;
         ofstream out(DISK_NAME, ios::binary);
